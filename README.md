@@ -6,13 +6,20 @@ Projeto de estudo e portfólio de automação de testes com [Playwright](https:/
 
 ## 🎯 O que é testado
 
-| Arquivo | Tipo | Alvo | Cenário |
-|---|---|---|---|
-| `tests/login.spec.ts` | E2E | [SauceDemo](https://www.saucedemo.com/) | Login com usuário válido e verificação da página de produtos |
-| `tests/checkout.spec.ts` | E2E | [SauceDemo](https://www.saucedemo.com/) | Fluxo completo de compra: login, adicionar ao carrinho, checkout e mensagem de sucesso |
-| `tests/api.spec.ts` | API | [Restful Booker](https://restful-booker.herokuapp.com/) | Criação de reserva (POST), com validação de status e do corpo da resposta |
+São 31 cenários: 23 de interface e 8 de API. Os de interface rodam em 3 navegadores (69 execuções) e os de API rodam uma vez.
 
-Os testes de interface e de API usam sites públicos criados para prática de automação, então não é preciso subir nenhuma aplicação local.
+| Arquivo | Tipo | Alvo | Cenários |
+|---|---|---|---|
+| `tests/login.spec.ts` | E2E | [SauceDemo](https://www.saucedemo.com/) | Login com usuário válido |
+| `tests/login-negative.spec.ts` | E2E | SauceDemo | Senha incorreta, usuário inexistente, usuário bloqueado, campos vazios, logout e acesso sem autenticação |
+| `tests/inventory.spec.ts` | E2E | SauceDemo | Listagem, 4 ordenações e contador do carrinho |
+| `tests/cart.spec.ts` | E2E | SauceDemo | Itens no carrinho, remoção e continuidade da compra |
+| `tests/checkout.spec.ts` | E2E | SauceDemo | Fluxo completo de compra, do login à confirmação |
+| `tests/checkout-validation.spec.ts` | E2E | SauceDemo | Campos obrigatórios, total igual a subtotal mais imposto e conclusão da compra |
+| `tests/api.spec.ts` | API | [Restful Booker](https://restful-booker.herokuapp.com/) | Criação de reserva (POST) |
+| `tests/api-booking.spec.ts` | API | Restful Booker | Consulta, 404, atualização com e sem token, exclusão e autenticação |
+
+Os casos, com pré-condições e resultados esperados, estão em [`docs/plano-de-testes.md`](docs/plano-de-testes.md). Os alvos são sites públicos criados para prática de automação, então não é preciso subir nenhuma aplicação local.
 
 ## 🧱 Estrutura e padrão de projeto
 
@@ -21,20 +28,31 @@ Os testes de interface e de API usam sites públicos criados para prática de au
 ├── pages/                  # Page Objects (ações e locators de cada página)
 │   ├── LoginPage.ts
 │   ├── InventoryPage.ts
+│   ├── CartPage.ts
 │   └── CheckoutPage.ts
+├── api/                    # Cliente das chamadas da API (criar, consultar, atualizar, excluir)
+│   └── bookingClient.ts
+├── data/                   # Dados de teste (usuários, produtos, cliente)
+│   └── testData.ts
 ├── tests/                  # Cenários de teste (as verificações ficam aqui)
-│   ├── login.spec.ts
-│   ├── checkout.spec.ts
-│   └── api.spec.ts
-├── playwright.config.ts    # Configuração (navegadores, retries, trace, relatório)
+│   ├── fixtures.ts         # Page Objects e login prontos para uso nos testes
+│   └── *.spec.ts
+├── docs/
+│   └── plano-de-testes.md  # Plano de testes com os casos e resultados esperados
+├── playwright.config.ts    # Configuração (projetos, retries, trace, relatório)
 └── .github/workflows/      # Pipeline de CI
 ```
 
-Decisão de projeto: as classes em `pages/` só **executam ações** (navegar, preencher, clicar) e expõem locators. As **verificações (`expect`) ficam nos testes**, o que mantém os Page Objects reutilizáveis e os cenários legíveis.
+Decisões de projeto:
+
+- As classes em `pages/` só **executam ações** (navegar, preencher, clicar) e expõem locators. As **verificações (`expect`) ficam nos testes**, o que mantém os Page Objects reutilizáveis e os cenários legíveis.
+- **Fixtures** (`tests/fixtures.ts`) entregam os Page Objects e o login prontos, sem repetir a preparação em cada teste.
+- Cenários negativos de login e de checkout são **orientados a dados**: uma tabela de entradas gera um teste por linha.
+- Cada teste de API **cria a própria reserva**, então os testes não dependem uns dos outros.
 
 ## ⚙️ Configuração
 
-- Navegadores: Chromium, Firefox e WebKit
+- Projetos: `chromium`, `firefox` e `webkit` para interface, e `api` (sem navegador) para os testes de API
 - No CI: 2 tentativas por teste (`retries`), execução com 1 worker e `forbidOnly` ativo
 - Trace coletado na primeira nova tentativa de um teste que falhou
 - Relatório HTML gerado em `playwright-report/` e publicado como artefato do workflow por 30 dias
@@ -54,7 +72,8 @@ npm test
 | Comando | Descrição |
 |---|---|
 | `npm test` | Roda todos os testes em todos os navegadores |
-| `npm run test:chromium` | Roda só no Chromium (mais rápido) |
+| `npm run test:chromium` | Roda os testes de interface só no Chromium (mais rápido) |
+| `npm run test:api` | Roda só os testes de API |
 | `npm run test:ui` | Abre o modo interativo do Playwright |
 | `npm run report` | Abre o último relatório HTML |
 
@@ -66,6 +85,6 @@ O workflow `.github/workflows/playwright.yml` instala as dependências e os nave
 
 ## 🗺️ Próximos passos
 
-- Mais cenários de login (usuário bloqueado, credenciais inválidas) e de carrinho
-- Testes de API para consulta, atualização e remoção de reservas
-- Documentar o plano de testes com os casos, pré-condições e resultados esperados
+- Cobrir os usuários `problem_user` e `performance_glitch_user` da SauceDemo
+- Testes visuais com `toHaveScreenshot`
+- Gerar o relatório publicado do CI em uma página do GitHub Pages
