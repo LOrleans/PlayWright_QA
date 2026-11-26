@@ -1,10 +1,15 @@
 {
   "name": "qa_learning",
   "version": "1.0.0",
-  "description": "",
+  "description": "Testes E2E e de API com Playwright e Page Object Model",
   "main": "index.js",
-  "scripts": {},
-  "keywords": [],
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "keywords": ["playwright", "qa", "e2e", "page-object-model", "typescript"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
